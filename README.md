@@ -15,20 +15,13 @@ npx @eyueldk/cursor-cloud-agent-mcp
 [mcp-add](https://github.com/paoloricciuti/mcp-add) writes the MCP config for Cursor for you.
 
 1. Create an API key in **Cursor Dashboard → Integrations**.
-2. Run:
+2. Run (replace `your_api_key_here`, then choose scope and clients when prompted):
 
 ```bash
-npx mcp-add \
-  --name cursor-cloud-agent \
-  --type stdio \
-  --command "npx -y @eyueldk/cursor-cloud-agent-mcp" \
-  --env "CURSOR_API_KEY=your_api_key_here" \
-  --scope project \
-  --clients cursor \
-  -y
+npx mcp-add --name cursor-cloud-agent --type stdio --command "npx -y @eyueldk/cursor-cloud-agent-mcp" --env "CURSOR_API_KEY=your_api_key_here"
 ```
 
-Use `--scope global` for `~/.cursor/mcp.json`. Or run `npx mcp-add` interactively and use command `npx -y @eyueldk/cursor-cloud-agent-mcp`.
+Or run fully interactively: `npx mcp-add`
 
 Reload Cursor (or enable the server under **Settings → Tools & MCP**) after installing.
 
