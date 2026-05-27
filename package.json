@@ -21,12 +21,13 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "rm -rf dist && tsc",
     "prepublishOnly": "pnpm run build && pnpm test",
     "start": "node dist/index.js",
     "dev": "tsx src/index.ts",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "publish:npm": "pnpm publish --access public --provenance --no-git-checks"
   },
   "engines": {
     "node": ">=20"

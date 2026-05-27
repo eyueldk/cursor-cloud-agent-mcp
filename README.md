@@ -90,6 +90,20 @@ pnpm test
 
 ## Publish
 
+
+### First publish (404 on `@eyueldk`?)
+
+If publish fails with **404 Not Found** for `@eyueldk/cursor-cloud-agent-mcp`:
+
+1. Ensure the **`@eyueldk`** scope exists on your npm account (user or org).
+2. Add a **Trusted Publisher** on npm: repo `eyueldk/cursor-cloud-agent-mcp`, workflow `publish-npm.yml`.
+3. Or publish once from your machine:
+
+```bash
+npm login
+pnpm publish:npm
+```
+
 Publishing is automatic via [GitHub Actions](.github/workflows/publish-npm.yml) and [npm trusted publishing](https://docs.npmjs.com/trusted-publishers) (no `NPM_TOKEN`).
 
 ### One-time npm setup
