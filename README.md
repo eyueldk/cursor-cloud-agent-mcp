@@ -4,9 +4,15 @@ MCP server for the [Cursor Cloud Agents API](https://cursor.com/docs/cloud-agent
 
 ## Install
 
-### Quick install with mcp-add (recommended)
+Run with npx (no global install required):
 
-[mcp-add](https://github.com/paoloricciuti/mcp-add) writes the MCP config for Cursor (and other clients) for you.
+```bash
+npx cursor-cloud-mcp
+```
+
+### Quick install with mcp-add
+
+[mcp-add](https://github.com/paoloricciuti/mcp-add) writes the MCP config for Cursor for you.
 
 1. Create an API key in **Cursor Dashboard → Integrations**.
 2. Run:
@@ -22,34 +28,13 @@ npx mcp-add \
   -y
 ```
 
-Use `--scope global` to install in `~/.cursor/mcp.json` instead of `.cursor/mcp.json` in the current project.
-
-Or run interactively:
-
-```bash
-npx mcp-add
-```
-
-Then choose **stdio**, command `npx -y cursor-cloud-mcp`, and set `CURSOR_API_KEY` when prompted.
+Use `--scope global` for `~/.cursor/mcp.json`. Or run `npx mcp-add` interactively and use command `npx -y cursor-cloud-mcp`.
 
 Reload Cursor (or enable the server under **Settings → Tools & MCP**) after installing.
 
-### Manual install
-
-```bash
-npm install -g cursor-cloud-mcp
-```
-
-Or run without installing:
-
-```bash
-npx cursor-cloud-mcp
-```
-
 ## Configure
 
-1. Create an API key in **Cursor Dashboard → Integrations**.
-2. Add to your MCP config manually:
+Add to `.cursor/mcp.json` (project) or `~/.cursor/mcp.json` (global):
 
 ```json
 {
@@ -65,26 +50,13 @@ npx cursor-cloud-mcp
 }
 ```
 
-Installed globally:
-
-```json
-{
-  "mcpServers": {
-    "cursor-cloud": {
-      "command": "cursor-cloud-mcp",
-      "env": {
-        "CURSOR_API_KEY": "your_api_key_here"
-      }
-    }
-  }
-}
-```
+Cursor runs `npx -y cursor-cloud-mcp`, which downloads the package if needed and starts the MCP server on stdio.
 
 ## Environment
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `CURSOR_API_KEY` | Yes | Cursor API key |
+| `CURSOR_API_KEY` | Yes | Cursor API key from **Dashboard → Integrations** |
 | `CURSOR_API_AUTH` | No | `basic` (default) or `bearer` |
 | `CURSOR_API_BASE_URL` | No | Default `https://api.cursor.com` |
 
