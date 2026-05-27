@@ -90,14 +90,37 @@ pnpm test
 
 ## Publish
 
-Publishing uses [npm trusted publishing](https://docs.npmjs.com/trusted-publishers) from GitHub Actions.
+Publishing is automatic via [GitHub Actions](.github/workflows/publish-npm.yml) and [npm trusted publishing](https://docs.npmjs.com/trusted-publishers) (no `NPM_TOKEN`).
 
-1. On npm, add trusted publisher for **`@eyueldk/cursor-cloud-agent-mcp`**: repo `eyueldk/cursor-cloud-agent-mcp`, workflow `publish-npm.yml`.
-2. Ensure the `@eyueldk` scope exists on your npm account.
-3. Bump `version` in `package.json`.
-4. Create a GitHub release with tag `vX.Y.Z` (e.g. `v1.0.0`).
+### One-time npm setup
 
-`publishConfig.access` is `public` so the scoped package is installable without an npm login.
+1. Create the **`@eyueldk`** scope on npm if needed.
+2. Add a trusted publisher for **`@eyueldk/cursor-cloud-agent-mcp`**:
+   - Repository: `eyueldk/cursor-cloud-agent-mcp`
+   - Workflow: `publish-npm.yml`
+
+### Automatic publish
+
+The workflow runs when you:
+
+- **Push to `main`** with a new `version` in `package.json` (skips if that version is already on npm)
+- **Push a tag** `vX.Y.Z` matching `package.json` (e.g. `git tag v1.0.1 && git push origin v1.0.1`)
+- **Publish a GitHub release** with tag `vX.Y.Z`
+
+Typical flow:
+
+```bash
+# bump "version" in package.json, then:
+git add package.json
+git commit -m "chore: release v1.0.1"
+git push origin main
+git tag v1.0.1
+git push origin v1.0.1
+```
+
+Or run manually: **Actions → Publish to npm → Run workflow** (optional `force` to republish).
+
+CI on `main` must pass before publish steps run build + test in the publish job.
 
 ## License
 
