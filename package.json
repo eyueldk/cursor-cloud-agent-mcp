@@ -1,5 +1,5 @@
 {
-  "name": "@eyueldk/cursor-cloud-mcp",
+  "name": "@eyueldk/cursor-cloud-agent-mcp",
   "version": "1.0.0",
   "description": "MCP server for the Cursor Cloud Agents API",
   "type": "module",
@@ -13,7 +13,7 @@
     }
   },
   "bin": {
-    "cursor-cloud-mcp": "./dist/index.js"
+    "cursor-cloud-agent-mcp": "./dist/index.js"
   },
   "files": [
     "dist",
@@ -36,17 +36,17 @@
     "model-context-protocol",
     "cursor",
     "cloud-agent",
-    "cursor-cloud"
+    "cursor-cloud-agent-mcp"
   ],
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/eyueldk/cursor-cloud-mcp.git"
+    "url": "git+https://github.com/eyueldk/cursor-cloud-agent-mcp.git"
   },
   "bugs": {
-    "url": "https://github.com/eyueldk/cursor-cloud-mcp/issues"
+    "url": "https://github.com/eyueldk/cursor-cloud-agent-mcp/issues"
   },
-  "homepage": "https://github.com/eyueldk/cursor-cloud-mcp#readme",
+  "homepage": "https://github.com/eyueldk/cursor-cloud-agent-mcp#readme",
   "publishConfig": {
     "access": "public",
     "provenance": true,

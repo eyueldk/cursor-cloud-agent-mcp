@@ -12,7 +12,7 @@ import { registerCloudAgentTools } from "./tools.js";
 export async function main(): Promise<void> {
   const client = createClientFromEnv();
   const server = new McpServer({
-    name: "@eyueldk/cursor-cloud-mcp",
+    name: "cursor-cloud-agent-mcp",
     version: readPackageVersion(),
   });
 
