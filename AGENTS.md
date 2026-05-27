@@ -20,7 +20,14 @@ The workflow uses OIDC (`id-token: write`) and `NPM_CONFIG_PROVENANCE=true` — 
 
 The publish job upgrades to **npm 11+** before `npm publish`. Older npm versions (bundled with Node 22) fail trusted publishing with a misleading **404 Not Found** even when the package exists.
 
-If publish still fails with 404, re-check the trusted publisher on npm matches this repo exactly (`eyueldk/cursor-cloud-agent-mcp`, workflow `publish-npm.yml`, environment blank unless you add one in the workflow).
+If publish still fails with 404 (“not in this registry” or “no permission”), the trusted publisher on npm is almost always misconfigured:
+
+1. npm → **@eyueldk/cursor-cloud-agent-mcp** → **Publishing access** → **Trusted publishers**
+2. Repository must be **`eyueldk/cursor-cloud-agent-mcp`** (not the old `cursor-cloud-mcp` name)
+3. Workflow filename: **`publish-npm.yml`** (exact, including `.yml`)
+4. Environment: leave empty unless the workflow job sets `environment:`
+
+As a fallback, add repo secret **`NPM_TOKEN`** (granular publish token with bypass 2FA) and document that maintainers can wire a token-based publish step if needed.
 
 ### Before you publish
 
