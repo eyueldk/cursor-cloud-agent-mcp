@@ -1,4 +1,4 @@
-# @eyueldk/cursor-cloud-mcp
+# @eyueldk/cursor-cloud-agent-mcp
 
 MCP server for the [Cursor Cloud Agents API](https://cursor.com/docs/cloud-agent/api/endpoints). Launch and manage cloud agents from Cursor, Claude Desktop, or any MCP client.
 
@@ -7,7 +7,7 @@ MCP server for the [Cursor Cloud Agents API](https://cursor.com/docs/cloud-agent
 Run with npx (no global install required):
 
 ```bash
-npx @eyueldk/cursor-cloud-mcp
+npx @eyueldk/cursor-cloud-agent-mcp
 ```
 
 ### Quick install with mcp-add
@@ -19,16 +19,16 @@ npx @eyueldk/cursor-cloud-mcp
 
 ```bash
 npx mcp-add \
-  --name cursor-cloud \
+  --name cursor-cloud-agent \
   --type stdio \
-  --command "npx -y @eyueldk/cursor-cloud-mcp" \
+  --command "npx -y @eyueldk/cursor-cloud-agent-mcp" \
   --env "CURSOR_API_KEY=your_api_key_here" \
   --scope project \
   --clients cursor \
   -y
 ```
 
-Use `--scope global` for `~/.cursor/mcp.json`. Or run `npx mcp-add` interactively and use command `npx -y @eyueldk/cursor-cloud-mcp`.
+Use `--scope global` for `~/.cursor/mcp.json`. Or run `npx mcp-add` interactively and use command `npx -y @eyueldk/cursor-cloud-agent-mcp`.
 
 Reload Cursor (or enable the server under **Settings → Tools & MCP**) after installing.
 
@@ -39,9 +39,9 @@ Add to `.cursor/mcp.json` (project) or `~/.cursor/mcp.json` (global):
 ```json
 {
   "mcpServers": {
-    "cursor-cloud": {
+    "cursor-cloud-agent": {
       "command": "npx",
-      "args": ["-y", "@eyueldk/cursor-cloud-mcp"],
+      "args": ["-y", "@eyueldk/cursor-cloud-agent-mcp"],
       "env": {
         "CURSOR_API_KEY": "your_api_key_here"
       }
@@ -50,7 +50,7 @@ Add to `.cursor/mcp.json` (project) or `~/.cursor/mcp.json` (global):
 }
 ```
 
-Cursor runs `npx -y @eyueldk/cursor-cloud-mcp`, which downloads the package if needed and starts the MCP server on stdio.
+Cursor runs `npx -y @eyueldk/cursor-cloud-agent-mcp`, which downloads the package if needed and starts the MCP server on stdio.
 
 ## Environment
 
@@ -92,8 +92,8 @@ pnpm test
 
 Publishing uses [npm trusted publishing](https://docs.npmjs.com/trusted-publishers) from GitHub Actions.
 
-1. On npm, add trusted publisher for **`@eyueldk/cursor-cloud-mcp`**: repo `eyueldk/cursor-cloud-mcp`, workflow `publish-npm.yml`.
-2. Ensure the `@eyueldk` scope exists on your npm account (create an org or user scope if needed).
+1. On npm, add trusted publisher for **`@eyueldk/cursor-cloud-agent-mcp`**: repo `eyueldk/cursor-cloud-agent-mcp`, workflow `publish-npm.yml`.
+2. Ensure the `@eyueldk` scope exists on your npm account.
 3. Bump `version` in `package.json`.
 4. Create a GitHub release with tag `vX.Y.Z` (e.g. `v1.0.0`).
 
