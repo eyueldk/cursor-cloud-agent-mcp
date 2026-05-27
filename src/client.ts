@@ -335,6 +335,13 @@ export class CursorCloudAgentClient {
       throw new CursorApiError(response.status, message, errorBody);
     }
 
+    if (parsed === undefined) {
+      throw new CursorApiError(
+        response.status,
+        `Cursor API ${method} ${path} returned an empty or invalid JSON body`,
+      );
+    }
+
     return parsed as T;
   }
 }

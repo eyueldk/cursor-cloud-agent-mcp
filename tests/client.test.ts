@@ -229,6 +229,25 @@ describe("CursorCloudAgentClient", () => {
     const [url] = fetchMock.mock.calls[0] as [URL];
     expect(url.searchParams.get("path")).toBe("artifacts/screenshot.png");
   });
+
+  it("throws when the API returns empty JSON on success", async () => {
+    fetchMock.mockResolvedValueOnce(
+      new Response("", {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+
+    const client = new CursorCloudAgentClient({
+      apiKey: "key",
+      fetchImpl: fetchMock,
+    });
+
+    await expect(client.getMe()).rejects.toMatchObject({
+      name: "CursorApiError",
+      message: /empty or invalid JSON/i,
+    });
+  });
 });
 
 describe("createClientFromEnv", () => {

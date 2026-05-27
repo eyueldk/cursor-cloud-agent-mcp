@@ -4,6 +4,11 @@ on:
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      version:
+        description: Version to publish (must match package.json, e.g. 1.0.0)
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -26,14 +31,17 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Verify package version matches release tag
-        if: github.event_name == 'release'
+      - name: Verify package version
         run: |
           PKG_VERSION=$(jq -r .version package.json)
-          TAG_VERSION="${{ github.event.release.tag_name }}"
-          TAG_VERSION="${TAG_VERSION#v}"
-          if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
-            echo "package.json version ($PKG_VERSION) does not match release tag ($TAG_VERSION)"
+          if [ "${{ github.event_name }}" = "release" ]; then
+            EXPECTED="${{ github.event.release.tag_name }}"
+            EXPECTED="${EXPECTED#v}"
+          else
+            EXPECTED="${{ inputs.version }}"
+          fi
+          if [ "$PKG_VERSION" != "$EXPECTED" ]; then
+            echo "package.json version ($PKG_VERSION) does not match expected version ($EXPECTED)"
             exit 1
           fi
 

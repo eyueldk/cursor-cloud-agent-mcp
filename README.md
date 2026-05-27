@@ -1,41 +1,30 @@
-# cursor-cloud-agent-mcp
+# cursor-cloud-mcp
 
-MCP server that wraps the [Cursor Cloud Agents API](https://cursor.com/docs/cloud-agent/api/endpoints) so you can launch and manage cloud agents from any MCP client (Cursor, Claude Desktop, etc.).
+MCP server for the [Cursor Cloud Agents API](https://cursor.com/docs/cloud-agent/api/endpoints). Launch and manage cloud agents from Cursor, Claude Desktop, or any MCP client.
 
 ## Install
 
 ```bash
-npm install -g cursor-cloud-agent-mcp
-# or use without global install:
-npx cursor-cloud-agent-mcp
+npm install -g cursor-cloud-mcp
 ```
 
-## Setup
+Or run without installing:
 
-1. Generate a Cursor API key from **Dashboard → Integrations**.
-2. Configure your MCP client:
+```bash
+npx cursor-cloud-mcp
+```
+
+## Configure
+
+1. Create an API key in **Cursor Dashboard → Integrations**.
+2. Add to your MCP config:
 
 ```json
 {
   "mcpServers": {
-    "cursor-cloud-agent": {
-      "command": "cursor-cloud-agent-mcp",
-      "env": {
-        "CURSOR_API_KEY": "your_api_key_here"
-      }
-    }
-  }
-}
-```
-
-Or with `npx`:
-
-```json
-{
-  "mcpServers": {
-    "cursor-cloud-agent": {
+    "cursor-cloud": {
       "command": "npx",
-      "args": ["-y", "cursor-cloud-agent-mcp"],
+      "args": ["-y", "cursor-cloud-mcp"],
       "env": {
         "CURSOR_API_KEY": "your_api_key_here"
       }
@@ -44,66 +33,64 @@ Or with `npx`:
 }
 ```
 
-## Environment variables
+Installed globally:
+
+```json
+{
+  "mcpServers": {
+    "cursor-cloud": {
+      "command": "cursor-cloud-mcp",
+      "env": {
+        "CURSOR_API_KEY": "your_api_key_here"
+      }
+    }
+  }
+}
+```
+
+## Environment
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `CURSOR_API_KEY` | Yes | Cursor API key (Basic or Bearer) |
+| `CURSOR_API_KEY` | Yes | Cursor API key |
 | `CURSOR_API_AUTH` | No | `basic` (default) or `bearer` |
-| `CURSOR_API_BASE_URL` | No | API base URL (default `https://api.cursor.com`) |
+| `CURSOR_API_BASE_URL` | No | Default `https://api.cursor.com` |
 
 ## Tools
 
-| Tool | API |
-|------|-----|
-| `cloud_agent_get_me` | `GET /v1/me` |
-| `cloud_agent_list_models` | `GET /v1/models` |
-| `cloud_agent_create` | `POST /v1/agents` |
-| `cloud_agent_list` | `GET /v1/agents` |
-| `cloud_agent_get` | `GET /v1/agents/{id}` |
-| `cloud_agent_create_run` | `POST /v1/agents/{id}/runs` |
-| `cloud_agent_list_runs` | `GET /v1/agents/{id}/runs` |
-| `cloud_agent_get_run` | `GET /v1/agents/{id}/runs/{runId}` |
-| `cloud_agent_wait_for_run` | Polls until terminal status |
-| `cloud_agent_cancel_run` | `POST .../runs/{runId}/cancel` |
-| `cloud_agent_list_artifacts` | `GET /v1/agents/{id}/artifacts` |
-| `cloud_agent_download_artifact` | `GET .../artifacts/download` |
-| `cloud_agent_archive` | `POST /v1/agents/{id}/archive` |
-| `cloud_agent_unarchive` | `POST /v1/agents/{id}/unarchive` |
-| `cloud_agent_delete` | `DELETE /v1/agents/{id}` |
+| Tool | Description |
+|------|-------------|
+| `cloud_agent_get_me` | API key metadata |
+| `cloud_agent_list_models` | Available models |
+| `cloud_agent_create` | Create agent + initial run |
+| `cloud_agent_list` | List agents |
+| `cloud_agent_get` | Get agent metadata |
+| `cloud_agent_create_run` | Follow-up prompt |
+| `cloud_agent_list_runs` | List runs |
+| `cloud_agent_get_run` | Run status and result |
+| `cloud_agent_wait_for_run` | Poll until terminal |
+| `cloud_agent_cancel_run` | Cancel active run |
+| `cloud_agent_list_artifacts` | List artifacts |
+| `cloud_agent_download_artifact` | Presigned download URL |
+| `cloud_agent_archive` | Archive agent |
+| `cloud_agent_unarchive` | Unarchive agent |
+| `cloud_agent_delete` | Permanently delete agent |
 
-## Development
+## Develop
 
 ```bash
 pnpm install
 pnpm run build
 pnpm test
-pnpm run dev
 ```
 
-HTTP requests are built via `src/request-utils.ts` (`buildApiRequest`), which encodes path params (`{agentId}`) and query params automatically.
+## Publish
 
-## Publishing (maintainers)
+Publishing uses [npm trusted publishing](https://docs.npmjs.com/trusted-publishers) from GitHub Actions.
 
-This package uses [npm trusted publishing](https://docs.npmjs.com/trusted-publishers) via GitHub Actions OIDC — no long-lived `NPM_TOKEN` is required.
-
-### One-time npm setup
-
-1. Create the package on [npmjs.com](https://www.npmjs.com/) (first publish must claim the name `cursor-cloud-agent-mcp`).
-2. Open **Package Settings → Trusted Publisher**.
-3. Add a GitHub Actions trusted publisher:
-   - **Organization or user:** `eyueldk`
-   - **Repository:** `cursor-cloud-mcp`
-   - **Workflow filename:** `publish-npm.yml`
-   - **Environment:** (leave empty unless you use a GitHub Environment)
-
-### Release flow
-
-1. Bump `version` in `package.json` and commit.
-2. Create a GitHub Release with tag `vX.Y.Z` matching that version (e.g. tag `v1.0.1` → version `1.0.1`).
-3. The [Publish to npm](.github/workflows/publish-npm.yml) workflow runs on `release: published`, verifies the version, runs tests, and publishes with provenance.
-
-You can also trigger a publish manually from the Actions tab via **workflow_dispatch** (after trusted publishing is configured).
+1. On npm, add trusted publisher: repo `eyueldk/cursor-cloud-mcp`, workflow `publish-npm.yml`.
+2. Bump `version` in `package.json`.
+3. Create a GitHub release with tag `vX.Y.Z` (e.g. `v1.0.0`).
 
 ## License
 
