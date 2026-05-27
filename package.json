@@ -27,7 +27,7 @@
     "dev": "tsx src/index.ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "publish:npm": "pnpm publish --access public --provenance --no-git-checks"
+    "publish:npm": "pnpm publish --access public --no-git-checks"
   },
   "engines": {
     "node": ">=20"
@@ -50,7 +50,6 @@
   "homepage": "https://github.com/eyueldk/cursor-cloud-agent-mcp#readme",
   "publishConfig": {
     "access": "public",
-    "provenance": true,
     "registry": "https://registry.npmjs.org/"
   },
   "dependencies": {

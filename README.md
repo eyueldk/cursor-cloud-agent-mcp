@@ -97,12 +97,14 @@ If publish fails with **404 Not Found** for `@eyueldk/cursor-cloud-agent-mcp`:
 
 1. Ensure the **`@eyueldk`** scope exists on your npm account (user or org).
 2. Add a **Trusted Publisher** on npm: repo `eyueldk/cursor-cloud-agent-mcp`, workflow `publish-npm.yml`.
-3. Or publish once from your machine:
+3. Or publish once from your machine (no provenance — that only works in GitHub Actions):
 
 ```bash
 npm login
 pnpm publish:npm
 ```
+
+If you see **provenance generation not supported for provider: null**, you are publishing locally with `--provenance` enabled. Use `pnpm publish:npm` (provenance is CI-only).
 
 Publishing is automatic via [GitHub Actions](.github/workflows/publish-npm.yml) and [npm trusted publishing](https://docs.npmjs.com/trusted-publishers) (no `NPM_TOKEN`).
 
