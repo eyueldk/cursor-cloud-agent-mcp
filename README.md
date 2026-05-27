@@ -2,24 +2,40 @@
 
 MCP server that wraps the [Cursor Cloud Agents API](https://cursor.com/docs/cloud-agent/api/endpoints) so you can launch and manage cloud agents from any MCP client (Cursor, Claude Desktop, etc.).
 
+## Install
+
+```bash
+npm install -g cursor-cloud-agent-mcp
+# or use without global install:
+npx cursor-cloud-agent-mcp
+```
+
 ## Setup
 
 1. Generate a Cursor API key from **Dashboard → Integrations**.
-2. Install dependencies and build:
-
-```bash
-pnpm install
-pnpm run build
-```
-
-3. Configure your MCP client (example for Cursor):
+2. Configure your MCP client:
 
 ```json
 {
   "mcpServers": {
     "cursor-cloud-agent": {
-      "command": "node",
-      "args": ["/absolute/path/to/cursor-cloud-mcp/dist/index.js"],
+      "command": "cursor-cloud-agent-mcp",
+      "env": {
+        "CURSOR_API_KEY": "your_api_key_here"
+      }
+    }
+  }
+}
+```
+
+Or with `npx`:
+
+```json
+{
+  "mcpServers": {
+    "cursor-cloud-agent": {
+      "command": "npx",
+      "args": ["-y", "cursor-cloud-agent-mcp"],
       "env": {
         "CURSOR_API_KEY": "your_api_key_here"
       }
@@ -59,11 +75,35 @@ pnpm run build
 ## Development
 
 ```bash
-pnpm run dev     # run MCP server on stdio
-pnpm test        # unit + MCP integration tests
+pnpm install
+pnpm run build
+pnpm test
+pnpm run dev
 ```
 
 HTTP requests are built via `src/request-utils.ts` (`buildApiRequest`), which encodes path params (`{agentId}`) and query params automatically.
+
+## Publishing (maintainers)
+
+This package uses [npm trusted publishing](https://docs.npmjs.com/trusted-publishers) via GitHub Actions OIDC — no long-lived `NPM_TOKEN` is required.
+
+### One-time npm setup
+
+1. Create the package on [npmjs.com](https://www.npmjs.com/) (first publish must claim the name `cursor-cloud-agent-mcp`).
+2. Open **Package Settings → Trusted Publisher**.
+3. Add a GitHub Actions trusted publisher:
+   - **Organization or user:** `eyueldk`
+   - **Repository:** `cursor-cloud-mcp`
+   - **Workflow filename:** `publish-npm.yml`
+   - **Environment:** (leave empty unless you use a GitHub Environment)
+
+### Release flow
+
+1. Bump `version` in `package.json` and commit.
+2. Create a GitHub Release with tag `vX.Y.Z` matching that version (e.g. tag `v1.0.1` → version `1.0.1`).
+3. The [Publish to npm](.github/workflows/publish-npm.yml) workflow runs on `release: published`, verifies the version, runs tests, and publishes with provenance.
+
+You can also trigger a publish manually from the Actions tab via **workflow_dispatch** (after trusted publishing is configured).
 
 ## License
 

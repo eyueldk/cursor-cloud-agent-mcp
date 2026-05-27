@@ -4,11 +4,25 @@
   "description": "MCP server for the Cursor Cloud Agents API",
   "type": "module",
   "packageManager": "pnpm@10.33.3",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
   "bin": {
     "cursor-cloud-agent-mcp": "./dist/index.js"
   },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsc",
+    "prepublishOnly": "pnpm run build",
     "start": "node dist/index.js",
     "dev": "tsx src/index.ts",
     "test": "vitest run",
@@ -19,10 +33,25 @@
   },
   "keywords": [
     "mcp",
+    "model-context-protocol",
     "cursor",
-    "cloud-agent"
+    "cloud-agent",
+    "cursor-cloud-agent",
+    "api"
   ],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eyueldk/cursor-cloud-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/eyueldk/cursor-cloud-mcp/issues"
+  },
+  "homepage": "https://github.com/eyueldk/cursor-cloud-mcp#readme",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.1",
     "zod": "^4.4.3"
