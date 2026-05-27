@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { jsonResponse } from "./helpers.js";
 import {
   CursorApiError,
   CursorCloudAgentClient,
@@ -7,12 +8,6 @@ import {
   DEFAULT_API_BASE_URL,
 } from "../src/client.js";
 
-function jsonResponse(body: unknown, status = 200): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { "Content-Type": "application/json" },
-  });
-}
 
 describe("CursorCloudAgentClient", () => {
   const fetchMock = vi.fn<typeof fetch>();

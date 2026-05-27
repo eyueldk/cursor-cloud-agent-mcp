@@ -1,13 +1,14 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
-import {
-  CursorApiError,
-  CursorCloudAgentClient,
-  type CreateAgentRequest,
-  type CreateRunRequest,
-} from "./client.js";
-import { formatJson } from "./format.js";
+import { CursorApiError, CursorCloudAgentClient } from "./client.js";
+
+const readOnlyAnnotations = {
+  readOnlyHint: true,
+  destructiveHint: false,
+  idempotentHint: true,
+  openWorldHint: true,
+} as const;
 
 const promptSchema = z.object({
   text: z.string().min(1).describe("Instruction text for the agent or run"),
@@ -51,35 +52,20 @@ const modelSchema = z.object({
     .describe("Per-model parameters supported by the selected model"),
 });
 
-function toolResult(data: unknown) {
-  return {
-    content: [{ type: "text" as const, text: formatJson(data) }],
-  };
-}
-
-function toolError(error: unknown) {
-  if (error instanceof CursorApiError) {
-    return {
-      content: [
-        {
-          type: "text" as const,
-          text: formatJson({
-            error: error.message,
-            status: error.status,
-            body: error.body,
-          }),
-        },
-      ],
-      isError: true,
-    };
-  }
-
-  const message = error instanceof Error ? error.message : String(error);
-  return {
-    content: [{ type: "text" as const, text: formatJson({ error: message }) }],
-    isError: true,
-  };
-}
+const createAgentInputSchema = z.object({
+  prompt: promptSchema,
+  model: modelSchema.optional(),
+  name: z.string().max(100).optional(),
+  repos: z.array(repoSchema).max(20).optional(),
+  workOnCurrentBranch: z.boolean().optional(),
+  autoCreatePR: z.boolean().optional(),
+  skipReviewerRequest: z.boolean().optional(),
+  mode: z.enum(["agent", "plan"]).optional(),
+  agentId: z
+    .string()
+    .optional()
+    .describe("Client-supplied id for idempotent creates (bc-...)"),
+});
 
 export function registerCloudAgentTools(
   server: McpServer,
@@ -92,20 +78,9 @@ export function registerCloudAgentTools(
       description:
         "Returns metadata about the Cursor API key in use (name, owner, creation time).",
       inputSchema: z.object({}),
-      annotations: {
-        readOnlyHint: true,
-        destructiveHint: false,
-        idempotentHint: true,
-        openWorldHint: true,
-      },
+      annotations: readOnlyAnnotations,
     },
-    async () => {
-      try {
-        return toolResult(await client.getMe());
-      } catch (error) {
-        return toolError(error);
-      }
-    },
+    async () => runTool(() => client.getMe()),
   );
 
   server.registerTool(
@@ -115,20 +90,9 @@ export function registerCloudAgentTools(
       description:
         "Lists models and parameters you can pass when creating a cloud agent.",
       inputSchema: z.object({}),
-      annotations: {
-        readOnlyHint: true,
-        destructiveHint: false,
-        idempotentHint: true,
-        openWorldHint: true,
-      },
+      annotations: readOnlyAnnotations,
     },
-    async () => {
-      try {
-        return toolResult(await client.listModels());
-      } catch (error) {
-        return toolError(error);
-      }
-    },
+    async () => runTool(() => client.listModels()),
   );
 
   server.registerTool(
@@ -137,20 +101,7 @@ export function registerCloudAgentTools(
       title: "Create cloud agent",
       description:
         "Creates a Cursor Cloud Agent and enqueues its initial run. Returns agent and run metadata.",
-      inputSchema: z.object({
-        prompt: promptSchema,
-        model: modelSchema.optional(),
-        name: z.string().max(100).optional(),
-        repos: z.array(repoSchema).max(20).optional(),
-        workOnCurrentBranch: z.boolean().optional(),
-        autoCreatePR: z.boolean().optional(),
-        skipReviewerRequest: z.boolean().optional(),
-        mode: z.enum(["agent", "plan"]).optional(),
-        agentId: z
-          .string()
-          .optional()
-          .describe("Client-supplied id for idempotent creates (bc-...)"),
-      }),
+      inputSchema: createAgentInputSchema,
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,
@@ -158,30 +109,7 @@ export function registerCloudAgentTools(
         openWorldHint: true,
       },
     },
-    async (input) => {
-      try {
-        const body: CreateAgentRequest = {
-          prompt: input.prompt,
-          ...(input.model !== undefined ? { model: input.model } : {}),
-          ...(input.name !== undefined ? { name: input.name } : {}),
-          ...(input.repos !== undefined ? { repos: input.repos } : {}),
-          ...(input.workOnCurrentBranch !== undefined
-            ? { workOnCurrentBranch: input.workOnCurrentBranch }
-            : {}),
-          ...(input.autoCreatePR !== undefined
-            ? { autoCreatePR: input.autoCreatePR }
-            : {}),
-          ...(input.skipReviewerRequest !== undefined
-            ? { skipReviewerRequest: input.skipReviewerRequest }
-            : {}),
-          ...(input.mode !== undefined ? { mode: input.mode } : {}),
-          ...(input.agentId !== undefined ? { agentId: input.agentId } : {}),
-        };
-        return toolResult(await client.createAgent(body));
-      } catch (error) {
-        return toolError(error);
-      }
-    },
+    async (input) => runTool(() => client.createAgent(input)),
   );
 
   server.registerTool(
@@ -195,20 +123,9 @@ export function registerCloudAgentTools(
         prUrl: z.url().optional(),
         includeArchived: z.boolean().optional(),
       }),
-      annotations: {
-        readOnlyHint: true,
-        destructiveHint: false,
-        idempotentHint: true,
-        openWorldHint: true,
-      },
+      annotations: readOnlyAnnotations,
     },
-    async (input) => {
-      try {
-        return toolResult(await client.listAgents(input));
-      } catch (error) {
-        return toolError(error);
-      }
-    },
+    async (input) => runTool(() => client.listAgents(input)),
   );
 
   server.registerTool(
@@ -220,20 +137,9 @@ export function registerCloudAgentTools(
       inputSchema: z.object({
         agentId: z.string().describe("Agent ID, e.g. bc-00000000-..."),
       }),
-      annotations: {
-        readOnlyHint: true,
-        destructiveHint: false,
-        idempotentHint: true,
-        openWorldHint: true,
-      },
+      annotations: readOnlyAnnotations,
     },
-    async ({ agentId }) => {
-      try {
-        return toolResult(await client.getAgent(agentId));
-      } catch (error) {
-        return toolError(error);
-      }
-    },
+    async ({ agentId }) => runTool(() => client.getAgent(agentId)),
   );
 
   server.registerTool(
@@ -254,17 +160,7 @@ export function registerCloudAgentTools(
         openWorldHint: true,
       },
     },
-    async ({ agentId, prompt, mode }) => {
-      try {
-        const body: CreateRunRequest = {
-          prompt,
-          ...(mode !== undefined ? { mode } : {}),
-        };
-        return toolResult(await client.createRun(agentId, body));
-      } catch (error) {
-        return toolError(error);
-      }
-    },
+    async ({ agentId, ...body }) => runTool(() => client.createRun(agentId, body)),
   );
 
   server.registerTool(
@@ -277,21 +173,9 @@ export function registerCloudAgentTools(
         limit: z.number().int().min(1).max(100).optional(),
         cursor: z.string().optional(),
       }),
-      annotations: {
-        readOnlyHint: true,
-        destructiveHint: false,
-        idempotentHint: true,
-        openWorldHint: true,
-      },
+      annotations: readOnlyAnnotations,
     },
-    async (input) => {
-      try {
-        const { agentId, ...query } = input;
-        return toolResult(await client.listRuns(agentId, query));
-      } catch (error) {
-        return toolError(error);
-      }
-    },
+    async ({ agentId, ...query }) => runTool(() => client.listRuns(agentId, query)),
   );
 
   server.registerTool(
@@ -304,20 +188,9 @@ export function registerCloudAgentTools(
         agentId: z.string(),
         runId: z.string(),
       }),
-      annotations: {
-        readOnlyHint: true,
-        destructiveHint: false,
-        idempotentHint: true,
-        openWorldHint: true,
-      },
+      annotations: readOnlyAnnotations,
     },
-    async ({ agentId, runId }) => {
-      try {
-        return toolResult(await client.getRun(agentId, runId));
-      } catch (error) {
-        return toolError(error);
-      }
-    },
+    async ({ agentId, runId }) => runTool(() => client.getRun(agentId, runId)),
   );
 
   server.registerTool(
@@ -342,25 +215,10 @@ export function registerCloudAgentTools(
           .optional()
           .describe("Max wait time in ms (default 600000)"),
       }),
-      annotations: {
-        readOnlyHint: true,
-        destructiveHint: false,
-        idempotentHint: true,
-        openWorldHint: true,
-      },
+      annotations: readOnlyAnnotations,
     },
-    async ({ agentId, runId, pollIntervalMs, timeoutMs }) => {
-      try {
-        return toolResult(
-          await client.waitForRun(agentId, runId, {
-            pollIntervalMs,
-            timeoutMs,
-          }),
-        );
-      } catch (error) {
-        return toolError(error);
-      }
-    },
+    async ({ agentId, runId, pollIntervalMs, timeoutMs }) =>
+      runTool(() => client.waitForRun(agentId, runId, { pollIntervalMs, timeoutMs })),
   );
 
   server.registerTool(
@@ -379,13 +237,7 @@ export function registerCloudAgentTools(
         openWorldHint: true,
       },
     },
-    async ({ agentId, runId }) => {
-      try {
-        return toolResult(await client.cancelRun(agentId, runId));
-      } catch (error) {
-        return toolError(error);
-      }
-    },
+    async ({ agentId, runId }) => runTool(() => client.cancelRun(agentId, runId)),
   );
 
   server.registerTool(
@@ -397,20 +249,9 @@ export function registerCloudAgentTools(
       inputSchema: z.object({
         agentId: z.string(),
       }),
-      annotations: {
-        readOnlyHint: true,
-        destructiveHint: false,
-        idempotentHint: true,
-        openWorldHint: true,
-      },
+      annotations: readOnlyAnnotations,
     },
-    async ({ agentId }) => {
-      try {
-        return toolResult(await client.listArtifacts(agentId));
-      } catch (error) {
-        return toolError(error);
-      }
-    },
+    async ({ agentId }) => runTool(() => client.listArtifacts(agentId)),
   );
 
   server.registerTool(
@@ -425,20 +266,10 @@ export function registerCloudAgentTools(
           .string()
           .describe("Relative path, e.g. artifacts/screenshot.png"),
       }),
-      annotations: {
-        readOnlyHint: true,
-        destructiveHint: false,
-        idempotentHint: true,
-        openWorldHint: true,
-      },
+      annotations: readOnlyAnnotations,
     },
-    async ({ agentId, path }) => {
-      try {
-        return toolResult(await client.downloadArtifact(agentId, path));
-      } catch (error) {
-        return toolError(error);
-      }
-    },
+    async ({ agentId, path }) =>
+      runTool(() => client.downloadArtifact(agentId, path)),
   );
 
   server.registerTool(
@@ -457,13 +288,7 @@ export function registerCloudAgentTools(
         openWorldHint: true,
       },
     },
-    async ({ agentId }) => {
-      try {
-        return toolResult(await client.archiveAgent(agentId));
-      } catch (error) {
-        return toolError(error);
-      }
-    },
+    async ({ agentId }) => runTool(() => client.archiveAgent(agentId)),
   );
 
   server.registerTool(
@@ -481,13 +306,7 @@ export function registerCloudAgentTools(
         openWorldHint: true,
       },
     },
-    async ({ agentId }) => {
-      try {
-        return toolResult(await client.unarchiveAgent(agentId));
-      } catch (error) {
-        return toolError(error);
-      }
-    },
+    async ({ agentId }) => runTool(() => client.unarchiveAgent(agentId)),
   );
 
   server.registerTool(
@@ -506,12 +325,50 @@ export function registerCloudAgentTools(
         openWorldHint: true,
       },
     },
-    async ({ agentId }) => {
-      try {
-        return toolResult(await client.deleteAgent(agentId));
-      } catch (error) {
-        return toolError(error);
-      }
-    },
+    async ({ agentId }) => runTool(() => client.deleteAgent(agentId)),
   );
+}
+
+async function runTool(action: () => Promise<unknown>) {
+  try {
+    return toolResult(await action());
+  } catch (error) {
+    return toolError(error);
+  }
+}
+
+function toolResult(data: unknown) {
+  return {
+    content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }],
+  };
+}
+
+function toolError(error: unknown) {
+  if (error instanceof CursorApiError) {
+    return {
+      content: [
+        {
+          type: "text" as const,
+          text: JSON.stringify(
+            {
+              error: error.message,
+              status: error.status,
+              body: error.body,
+            },
+            null,
+            2,
+          ),
+        },
+      ],
+      isError: true,
+    };
+  }
+
+  const message = error instanceof Error ? error.message : String(error);
+  return {
+    content: [
+      { type: "text" as const, text: JSON.stringify({ error: message }, null, 2) },
+    ],
+    isError: true,
+  };
 }

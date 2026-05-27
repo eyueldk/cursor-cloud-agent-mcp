@@ -6,6 +6,13 @@ import {
 
 export const DEFAULT_API_BASE_URL = "https://api.cursor.com";
 
+const TERMINAL_RUN_STATUSES = new Set([
+  "FINISHED",
+  "ERROR",
+  "CANCELLED",
+  "EXPIRED",
+]);
+
 export type CursorApiAuthMode = "basic" | "bearer";
 
 export type CursorCloudAgentClientOptions = {
@@ -167,15 +174,15 @@ export class CursorCloudAgentClient {
   }
 
   getMe(): Promise<MeResponse> {
-    return this.request("GET", "/v1/me");
+    return this.request<MeResponse>("GET", "/v1/me");
   }
 
   listModels(): Promise<ModelsResponse> {
-    return this.request("GET", "/v1/models");
+    return this.request<ModelsResponse>("GET", "/v1/models");
   }
 
   createAgent(body: CreateAgentRequest): Promise<CreateAgentResponse> {
-    return this.request("POST", "/v1/agents", { body });
+    return this.request<CreateAgentResponse>("POST", "/v1/agents", { body });
   }
 
   listAgents(query?: {
@@ -184,17 +191,17 @@ export class CursorCloudAgentClient {
     prUrl?: string;
     includeArchived?: boolean;
   }): Promise<PaginatedAgents> {
-    return this.request("GET", "/v1/agents", { query });
+    return this.request<PaginatedAgents>("GET", "/v1/agents", { query });
   }
 
   getAgent(agentId: string): Promise<AgentSummary> {
-    return this.request("GET", "/v1/agents/{agentId}", {
+    return this.request<AgentSummary>("GET", "/v1/agents/{agentId}", {
       pathParams: { agentId },
     });
   }
 
   createRun(agentId: string, body: CreateRunRequest): Promise<CreateRunResponse> {
-    return this.request("POST", "/v1/agents/{agentId}/runs", {
+    return this.request<CreateRunResponse>("POST", "/v1/agents/{agentId}/runs", {
       pathParams: { agentId },
       body,
     });
@@ -204,20 +211,20 @@ export class CursorCloudAgentClient {
     agentId: string,
     query?: { limit?: number; cursor?: string },
   ): Promise<PaginatedRuns> {
-    return this.request("GET", "/v1/agents/{agentId}/runs", {
+    return this.request<PaginatedRuns>("GET", "/v1/agents/{agentId}/runs", {
       pathParams: { agentId },
       query,
     });
   }
 
   getRun(agentId: string, runId: string): Promise<RunSummary> {
-    return this.request("GET", "/v1/agents/{agentId}/runs/{runId}", {
+    return this.request<RunSummary>("GET", "/v1/agents/{agentId}/runs/{runId}", {
       pathParams: { agentId, runId },
     });
   }
 
   cancelRun(agentId: string, runId: string): Promise<{ id: string }> {
-    return this.request(
+    return this.request<{ id: string }>(
       "POST",
       "/v1/agents/{agentId}/runs/{runId}/cancel",
       { pathParams: { agentId, runId } },
@@ -225,35 +232,38 @@ export class CursorCloudAgentClient {
   }
 
   listArtifacts(agentId: string): Promise<{ items: ArtifactItem[] }> {
-    return this.request("GET", "/v1/agents/{agentId}/artifacts", {
-      pathParams: { agentId },
-    });
+    return this.request<{ items: ArtifactItem[] }>(
+      "GET",
+      "/v1/agents/{agentId}/artifacts",
+      { pathParams: { agentId } },
+    );
   }
 
   downloadArtifact(
     agentId: string,
     path: string,
   ): Promise<{ url: string; expiresAt: string }> {
-    return this.request("GET", "/v1/agents/{agentId}/artifacts/download", {
-      pathParams: { agentId },
-      query: { path },
-    });
+    return this.request<{ url: string; expiresAt: string }>(
+      "GET",
+      "/v1/agents/{agentId}/artifacts/download",
+      { pathParams: { agentId }, query: { path } },
+    );
   }
 
   archiveAgent(agentId: string): Promise<{ id: string }> {
-    return this.request("POST", "/v1/agents/{agentId}/archive", {
+    return this.request<{ id: string }>("POST", "/v1/agents/{agentId}/archive", {
       pathParams: { agentId },
     });
   }
 
   unarchiveAgent(agentId: string): Promise<{ id: string }> {
-    return this.request("POST", "/v1/agents/{agentId}/unarchive", {
+    return this.request<{ id: string }>("POST", "/v1/agents/{agentId}/unarchive", {
       pathParams: { agentId },
     });
   }
 
   deleteAgent(agentId: string): Promise<{ id: string }> {
-    return this.request("DELETE", "/v1/agents/{agentId}", {
+    return this.request<{ id: string }>("DELETE", "/v1/agents/{agentId}", {
       pathParams: { agentId },
     });
   }
@@ -268,20 +278,14 @@ export class CursorCloudAgentClient {
   ): Promise<RunSummary> {
     const pollIntervalMs = options?.pollIntervalMs ?? 3000;
     const timeoutMs = options?.timeoutMs ?? 600_000;
-    const terminal = new Set([
-      "FINISHED",
-      "ERROR",
-      "CANCELLED",
-      "EXPIRED",
-    ]);
-    const started = Date.now();
+    const deadline = Date.now() + timeoutMs;
 
     while (true) {
       const run = await this.getRun(agentId, runId);
-      if (terminal.has(run.status)) {
+      if (TERMINAL_RUN_STATUSES.has(run.status)) {
         return run;
       }
-      if (Date.now() - started > timeoutMs) {
+      if (Date.now() >= deadline) {
         throw new Error(
           `Run ${runId} did not reach a terminal state within ${timeoutMs}ms (last status: ${run.status})`,
         );

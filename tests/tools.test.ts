@@ -3,6 +3,7 @@ import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { describe, expect, it, vi } from "vitest";
 
+import { jsonResponse } from "./helpers.js";
 import { CursorCloudAgentClient } from "../src/client.js";
 import { registerCloudAgentTools } from "../src/tools.js";
 
@@ -23,12 +24,6 @@ function createTestPair() {
   return { server, client, clientTransport, serverTransport, fetchMock };
 }
 
-function jsonResponse(body: unknown, status = 200): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { "Content-Type": "application/json" },
-  });
-}
 
 describe("cloud agent MCP tools", () => {
   it("registers all expected tools", async () => {
