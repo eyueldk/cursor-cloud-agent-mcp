@@ -1,3 +1,9 @@
+import {
+  buildApiRequest,
+  parseJsonResponse,
+  type QueryParamValue,
+} from "./request-utils.js";
+
 export const DEFAULT_API_BASE_URL = "https://api.cursor.com";
 
 export type CursorApiAuthMode = "basic" | "bearer";
@@ -169,7 +175,7 @@ export class CursorCloudAgentClient {
   }
 
   createAgent(body: CreateAgentRequest): Promise<CreateAgentResponse> {
-    return this.request("POST", "/v1/agents", body);
+    return this.request("POST", "/v1/agents", { body });
   }
 
   listAgents(query?: {
@@ -178,85 +184,78 @@ export class CursorCloudAgentClient {
     prUrl?: string;
     includeArchived?: boolean;
   }): Promise<PaginatedAgents> {
-    return this.request("GET", "/v1/agents", undefined, query);
+    return this.request("GET", "/v1/agents", { query });
   }
 
   getAgent(agentId: string): Promise<AgentSummary> {
-    return this.request("GET", `/v1/agents/${encodeURIComponent(agentId)}`);
+    return this.request("GET", "/v1/agents/{agentId}", {
+      pathParams: { agentId },
+    });
   }
 
   createRun(agentId: string, body: CreateRunRequest): Promise<CreateRunResponse> {
-    return this.request(
-      "POST",
-      `/v1/agents/${encodeURIComponent(agentId)}/runs`,
+    return this.request("POST", "/v1/agents/{agentId}/runs", {
+      pathParams: { agentId },
       body,
-    );
+    });
   }
 
   listRuns(
     agentId: string,
     query?: { limit?: number; cursor?: string },
   ): Promise<PaginatedRuns> {
-    return this.request(
-      "GET",
-      `/v1/agents/${encodeURIComponent(agentId)}/runs`,
-      undefined,
+    return this.request("GET", "/v1/agents/{agentId}/runs", {
+      pathParams: { agentId },
       query,
-    );
+    });
   }
 
   getRun(agentId: string, runId: string): Promise<RunSummary> {
-    return this.request(
-      "GET",
-      `/v1/agents/${encodeURIComponent(agentId)}/runs/${encodeURIComponent(runId)}`,
-    );
+    return this.request("GET", "/v1/agents/{agentId}/runs/{runId}", {
+      pathParams: { agentId, runId },
+    });
   }
 
   cancelRun(agentId: string, runId: string): Promise<{ id: string }> {
     return this.request(
       "POST",
-      `/v1/agents/${encodeURIComponent(agentId)}/runs/${encodeURIComponent(runId)}/cancel`,
+      "/v1/agents/{agentId}/runs/{runId}/cancel",
+      { pathParams: { agentId, runId } },
     );
   }
 
   listArtifacts(agentId: string): Promise<{ items: ArtifactItem[] }> {
-    return this.request(
-      "GET",
-      `/v1/agents/${encodeURIComponent(agentId)}/artifacts`,
-    );
+    return this.request("GET", "/v1/agents/{agentId}/artifacts", {
+      pathParams: { agentId },
+    });
   }
 
   downloadArtifact(
     agentId: string,
     path: string,
   ): Promise<{ url: string; expiresAt: string }> {
-    return this.request(
-      "GET",
-      `/v1/agents/${encodeURIComponent(agentId)}/artifacts/download`,
-      undefined,
-      { path },
-    );
+    return this.request("GET", "/v1/agents/{agentId}/artifacts/download", {
+      pathParams: { agentId },
+      query: { path },
+    });
   }
 
   archiveAgent(agentId: string): Promise<{ id: string }> {
-    return this.request(
-      "POST",
-      `/v1/agents/${encodeURIComponent(agentId)}/archive`,
-    );
+    return this.request("POST", "/v1/agents/{agentId}/archive", {
+      pathParams: { agentId },
+    });
   }
 
   unarchiveAgent(agentId: string): Promise<{ id: string }> {
-    return this.request(
-      "POST",
-      `/v1/agents/${encodeURIComponent(agentId)}/unarchive`,
-    );
+    return this.request("POST", "/v1/agents/{agentId}/unarchive", {
+      pathParams: { agentId },
+    });
   }
 
   deleteAgent(agentId: string): Promise<{ id: string }> {
-    return this.request(
-      "DELETE",
-      `/v1/agents/${encodeURIComponent(agentId)}`,
-    );
+    return this.request("DELETE", "/v1/agents/{agentId}", {
+      pathParams: { agentId },
+    });
   }
 
   async waitForRun(
@@ -302,37 +301,26 @@ export class CursorCloudAgentClient {
   private async request<T>(
     method: string,
     path: string,
-    body?: unknown,
-    query?: Record<string, string | number | boolean | undefined>,
+    options?: {
+      pathParams?: Record<string, string | number>;
+      query?: Record<string, QueryParamValue>;
+      body?: unknown;
+    },
   ): Promise<T> {
-    const url = new URL(`${this.baseUrl}${path}`);
-    if (query) {
-      for (const [key, value] of Object.entries(query)) {
-        if (value !== undefined) {
-          url.searchParams.set(key, String(value));
-        }
-      }
-    }
-
-    const response = await this.fetchImpl(url, {
+    const { url, init } = buildApiRequest({
+      baseUrl: this.baseUrl,
       method,
+      path,
+      pathParams: options?.pathParams,
+      query: options?.query,
+      body: options?.body,
       headers: {
         Authorization: this.authHeader(),
-        Accept: "application/json",
-        ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
       },
-      body: body !== undefined ? JSON.stringify(body) : undefined,
     });
 
-    const text = await response.text();
-    let parsed: unknown;
-    if (text.length > 0) {
-      try {
-        parsed = JSON.parse(text);
-      } catch {
-        parsed = undefined;
-      }
-    }
+    const response = await this.fetchImpl(url, init);
+    const parsed = await parseJsonResponse(response);
 
     if (!response.ok) {
       const errorBody = isApiErrorBody(parsed) ? parsed : undefined;

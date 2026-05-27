@@ -21,7 +21,7 @@ const promptSchema = z.object({
             .describe("MIME type for base64 image data"),
         }),
         z.object({
-          url: z.string().url().describe("HTTP(S) URL for Cursor to fetch"),
+          url: z.url().describe("HTTP(S) URL for Cursor to fetch"),
         }),
       ]),
     )
@@ -30,19 +30,12 @@ const promptSchema = z.object({
 });
 
 const repoSchema = z.object({
-  url: z
-    .string()
-    .url()
-    .describe("GitHub repository URL, e.g. https://github.com/org/repo"),
+  url: z.url().describe("GitHub repository URL, e.g. https://github.com/org/repo"),
   startingRef: z
     .string()
     .optional()
     .describe("Branch name or commit SHA (ignored when prUrl is set)"),
-  prUrl: z
-    .string()
-    .url()
-    .optional()
-    .describe("GitHub pull request URL to work on"),
+  prUrl: z.url().optional().describe("GitHub pull request URL to work on"),
 });
 
 const modelSchema = z.object({
@@ -199,7 +192,7 @@ export function registerCloudAgentTools(
       inputSchema: z.object({
         limit: z.number().int().min(1).max(100).optional(),
         cursor: z.string().optional(),
-        prUrl: z.string().url().optional(),
+        prUrl: z.url().optional(),
         includeArchived: z.boolean().optional(),
       }),
       annotations: {

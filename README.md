@@ -8,8 +8,8 @@ MCP server that wraps the [Cursor Cloud Agents API](https://cursor.com/docs/clou
 2. Install dependencies and build:
 
 ```bash
-npm install
-npm run build
+pnpm install
+pnpm run build
 ```
 
 3. Configure your MCP client (example for Cursor):
@@ -59,9 +59,11 @@ npm run build
 ## Development
 
 ```bash
-npm run dev      # run MCP server on stdio
-npm test         # unit + MCP integration tests
+pnpm run dev     # run MCP server on stdio
+pnpm test        # unit + MCP integration tests
 ```
+
+HTTP requests are built via `src/request-utils.ts` (`buildApiRequest`), which encodes path params (`{agentId}`) and query params automatically.
 
 ## License
 
