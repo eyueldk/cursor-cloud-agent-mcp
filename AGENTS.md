@@ -18,6 +18,10 @@ Instructions for Cursor Cloud Agents and humans working on `@eyueldk/cursor-clou
 
 The workflow uses OIDC (`id-token: write`) and `NPM_CONFIG_PROVENANCE=true` — no `NPM_TOKEN` secret is required.
 
+The publish job upgrades to **npm 11+** before `npm publish`. Older npm versions (bundled with Node 22) fail trusted publishing with a misleading **404 Not Found** even when the package exists.
+
+If publish still fails with 404, re-check the trusted publisher on npm matches this repo exactly (`eyueldk/cursor-cloud-agent-mcp`, workflow `publish-npm.yml`, environment blank unless you add one in the workflow).
+
 ### Before you publish
 
 1. Bump `"version"` in `package.json` (semver).

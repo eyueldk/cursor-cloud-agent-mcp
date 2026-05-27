@@ -97,6 +97,12 @@ jobs:
         if: steps.skip.outputs.publish == 'true'
         run: pnpm test
 
+      # Trusted publishing (OIDC) requires npm 11.5.1+; Node 22's bundled npm is too old
+      # and surfaces misleading 404 errors on publish.
+      - name: Upgrade npm for OIDC trusted publishing
+        if: steps.skip.outputs.publish == 'true'
+        run: npm install -g npm@11
+
       - name: Publish to npm (trusted publishing)
         if: steps.skip.outputs.publish == 'true'
         env:
