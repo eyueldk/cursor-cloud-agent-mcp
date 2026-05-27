@@ -1,5 +1,5 @@
 {
-  "name": "cursor-cloud-mcp",
+  "name": "@eyueldk/cursor-cloud-mcp",
   "version": "1.0.0",
   "description": "MCP server for the Cursor Cloud Agents API",
   "type": "module",
