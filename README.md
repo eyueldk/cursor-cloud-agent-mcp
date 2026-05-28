@@ -1,14 +1,51 @@
 # @eyueldk/cursor-cloud-agent-mcp
 
-MCP server for the [Cursor Cloud Agents API](https://cursor.com/docs/cloud-agent/api/endpoints). Launch and manage cloud agents from Cursor or any MCP client.
+MCP server for the [Cursor Cloud Agents API](https://cursor.com/docs/cloud-agent/api/endpoints). Launch and manage cloud agents from [OpenClaw](https://docs.openclaw.ai/) or any MCP client.
 
 ## Setup
 
 1. Create an API key in **Cursor Dashboard → Integrations**.
 
-2. Add the server to Cursor.
+2. Add the server to your MCP host (OpenClaw recommended).
 
-**Option A — [mcp-add](https://github.com/paoloricciuti/mcp-add)** (recommended). Replace `your_api_key_here`; pick scope and clients when prompted:
+### OpenClaw (recommended)
+
+Add the server under **`mcp.servers`** in your OpenClaw gateway config (default: `~/.openclaw/openclaw.json`, JSON5). Replace `your_api_key_here` with your key:
+
+```json5
+{
+  mcp: {
+    servers: {
+      "cursor-cloud-agent": {
+        command: "npx",
+        args: ["-y", "@eyueldk/cursor-cloud-agent-mcp"],
+        env: {
+          CURSOR_API_KEY: "your_api_key_here",
+        },
+      },
+    },
+  },
+}
+```
+
+Or use the CLI (equivalent to editing `mcp.servers`):
+
+```bash
+openclaw config set mcp.servers.cursor-cloud-agent '{"command":"npx","args":["-y","@eyueldk/cursor-cloud-agent-mcp"],"env":{"CURSOR_API_KEY":"your_api_key_here"}}'
+openclaw gateway restart
+```
+
+After editing the file directly, restart the gateway so the new MCP server is picked up:
+
+```bash
+openclaw gateway restart
+```
+
+See the [OpenClaw MCP configuration reference](https://docs.openclaw.ai/gateway/configuration-reference#mcp) for remote servers, env substitution, and other options.
+
+### Cursor (alternative)
+
+**Option A — [mcp-add](https://github.com/paoloricciuti/mcp-add)**. Replace `your_api_key_here`; pick scope and clients when prompted:
 
 ```bash
 npx mcp-add --name cursor-cloud-agent --type stdio --command "npx -y @eyueldk/cursor-cloud-agent-mcp" --env "CURSOR_API_KEY=your_api_key_here"
